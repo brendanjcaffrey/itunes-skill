@@ -1,5 +1,5 @@
 class Request
-  attr_reader :app_id, :request_type
+  attr_reader :request_type
 
   def self.extract_from_request_body(body)
     return new(nil, nil) if body.empty?

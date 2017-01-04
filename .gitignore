@@ -1,0 +1,4 @@
+/ssl/server.crt
+/ssl/server.key
+/ssl/configuration.cnf
+/src/secrets.rb

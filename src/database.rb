@@ -47,25 +47,51 @@ class Database
   end
 
   def get_next_track(user_id)
-    user_playlist_id, new_playlist_index = get_next_playlist_index_for_user(user_id)
-    @db.get_first_value('SELECT persistent_id FROM user_playlist_entry WHERE user_playlist_id=? AND playlist_index=?', user_playlist_id, new_playlist_index);
+    get_track_id_at_index(*get_playlist_id_and_next_index(user_id))
   end
 
-  def advance_user_playlist(user_id)
-    user_playlist_id, new_playlist_index = get_next_playlist_index_for_user(user_id)
-    @db.get_first_value('UPDATE user_playlist SET current_index=? WHERE id=?', new_playlist_index, user_playlist_id);
+  def get_previous_track(user_id)
+    get_track_id_at_index(*get_playlist_id_and_previous_index(user_id))
+  end
+
+  def increment_playlist_index(user_id)
+    update_playlist_index(*get_playlist_id_and_next_index(user_id))
+  end
+
+  def decrement_playlist_index(user_id)
+    update_playlist_index(*get_playlist_id_and_previous_index(user_id))
   end
 
   private
 
-  def get_next_playlist_index_for_user(user_id)
+  def get_playlist_info(user_id)
     rows = @db.execute('SELECT id, current_index, total_entries FROM user_playlist WHERE user_id=?', user_id)
     raise UserIdNotFoundException.new if rows.empty?
 
-    user_playlist_id, current_index, total = rows[0]
+    rows[0]
+  end
+
+  def get_playlist_id_and_next_index(user_id)
+    user_playlist_id, current_index, total = get_playlist_info(user_id)
     new_playlist_index = current_index + 1
     new_playlist_index = 0 if new_playlist_index >= total
 
     [user_playlist_id, new_playlist_index]
+  end
+
+  def get_playlist_id_and_previous_index(user_id)
+    user_playlist_id, current_index, total = get_playlist_info(user_id)
+    new_playlist_index = current_index - 1
+    new_playlist_index = total - 1 if new_playlist_index < 0
+
+    [user_playlist_id, new_playlist_index]
+  end
+
+  def update_playlist_index(user_playlist_id, new_playlist_index)
+    @db.get_first_value('UPDATE user_playlist SET current_index=? WHERE id=?', new_playlist_index, user_playlist_id);
+  end
+
+  def get_track_id_at_index(user_playlist_id, playlist_index)
+    @db.get_first_value('SELECT persistent_id FROM user_playlist_entry WHERE user_playlist_id=? AND playlist_index=?', user_playlist_id, playlist_index);
   end
 end

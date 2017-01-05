@@ -78,15 +78,43 @@ describe Database do
     end
   end
 
-  describe 'advance_user_playlist' do
+  describe 'get_previous_track' do
+    it 'should get the next track without advancing' do
+      @db.create_or_replace_user_playlist('USERID', ['TRACK0', 'TRACK1', 'TRACK2'])
+      @sqlite.execute('UPDATE user_playlist SET current_index=1')
+      expect(@db.get_previous_track('USERID')).to eq('TRACK0')
+      expect(@db.get_previous_track('USERID')).to eq('TRACK0')
+    end
+
+    it 'should loop around' do
+      @db.create_or_replace_user_playlist('USERID', ['TRACK0', 'TRACK1', 'TRACK2'])
+      expect(@db.get_previous_track('USERID')).to eq('TRACK2')
+      expect(@db.get_previous_track('USERID')).to eq('TRACK2')
+    end
+  end
+
+  describe 'increment_playlist_index' do
     it 'should increment and loop' do
       @db.create_or_replace_user_playlist('USERID', ['TRACK0', 'TRACK1', 'TRACK2'])
       expect(@sqlite.get_first_value('SELECT current_index FROM user_playlist')).to eq(0)
-      @db.advance_user_playlist('USERID')
+      @db.increment_playlist_index('USERID')
       expect(@sqlite.get_first_value('SELECT current_index FROM user_playlist')).to eq(1)
-      @db.advance_user_playlist('USERID')
+      @db.increment_playlist_index('USERID')
       expect(@sqlite.get_first_value('SELECT current_index FROM user_playlist')).to eq(2)
-      @db.advance_user_playlist('USERID')
+      @db.increment_playlist_index('USERID')
+      expect(@sqlite.get_first_value('SELECT current_index FROM user_playlist')).to eq(0)
+    end
+  end
+
+  describe 'decrement_playlist_index' do
+    it 'should decrement and loop' do
+      @db.create_or_replace_user_playlist('USERID', ['TRACK0', 'TRACK1', 'TRACK2'])
+      expect(@sqlite.get_first_value('SELECT current_index FROM user_playlist')).to eq(0)
+      @db.decrement_playlist_index('USERID')
+      expect(@sqlite.get_first_value('SELECT current_index FROM user_playlist')).to eq(2)
+      @db.decrement_playlist_index('USERID')
+      expect(@sqlite.get_first_value('SELECT current_index FROM user_playlist')).to eq(1)
+      @db.decrement_playlist_index('USERID')
       expect(@sqlite.get_first_value('SELECT current_index FROM user_playlist')).to eq(0)
     end
   end

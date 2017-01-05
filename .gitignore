@@ -2,3 +2,5 @@
 /ssl/server.key
 /ssl/configuration.cnf
 /src/secrets.rb
+/itunes_skill.db
+/itunes_skill_test.db

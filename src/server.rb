@@ -1,6 +1,7 @@
 require 'json'
 require 'sinatra/base'
 require 'sinatra/json'
+require 'sqlite3'
 
 require_relative 'control_intents.rb'
 require_relative 'custom_intents.rb'
@@ -26,6 +27,8 @@ class Server < Sinatra::Base
         :verify_peer      => false
       }
     end
+
+    Database.create_tables
   end
 
   post '/itunes' do

@@ -8,12 +8,6 @@
             "intent": "AMAZON.CancelIntent"
         },
         {
-            "intent": "AMAZON.LoopOffIntent"
-        },
-        {
-            "intent": "AMAZON.LoopOnIntent"
-        },
-        {
             "intent": "AMAZON.NextIntent"
         },
         {

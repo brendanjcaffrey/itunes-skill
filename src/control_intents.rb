@@ -2,6 +2,9 @@ class ControlIntents
   def self.on_cancel(request, builder)
   end
 
+  def self.on_loop(request, builder, enabled)
+  end
+
   def self.on_next(request, builder)
   end
 

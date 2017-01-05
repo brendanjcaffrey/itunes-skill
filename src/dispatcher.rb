@@ -7,6 +7,8 @@ class Dispatcher
 
     # built in playback control intents
     when 'AMAZON.CancelIntent'     ; ControlIntents.on_cancel(request, builder)
+    when 'AMAZON.LoopOffIntent'    ; ControlIntents.on_loop(request, builder, false)
+    when 'AMAZON.LoopOnIntent'     ; ControlIntents.on_loop(request, builder, true)
     when 'AMAZON.NextIntent'       ; ControlIntents.on_next(request, builder)
     when 'AMAZON.PauseIntent'      ; ControlIntents.on_pause(request, builder)
     when 'AMAZON.PreviousIntent'   ; ControlIntents.on_previous(request, builder)

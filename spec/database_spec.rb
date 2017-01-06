@@ -63,6 +63,25 @@ describe Database do
     end
   end
 
+  describe 'is_valid_user?' do
+    it 'should return true if there\'s a playlist in the database' do
+      @db.create_or_replace_user_playlist('USERID', ['TRACK0', 'TRACK1', 'TRACK2'])
+      expect(@db.is_valid_user?('USERID')).to be(true)
+    end
+
+    it 'should return false if there\'s not a playlist in the database' do
+      @db.create_or_replace_user_playlist('USERID', ['TRACK0', 'TRACK1', 'TRACK2'])
+      expect(@db.is_valid_user?('INVALID')).to be(false)
+    end
+  end
+
+  describe 'get_current_track' do
+    it 'should get the current track' do
+      @db.create_or_replace_user_playlist('USERID', ['TRACK0', 'TRACK1', 'TRACK2'])
+      expect(@db.get_current_track('USERID')).to eq('TRACK0')
+    end
+  end
+
   describe 'get_next_track' do
     it 'should get the next track without advancing' do
       @db.create_or_replace_user_playlist('USERID', ['TRACK0', 'TRACK1', 'TRACK2'])

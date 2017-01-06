@@ -7,6 +7,29 @@ module Secrets
 end
 
 describe Request do
+  describe 'user id' do
+    it 'should extract the user id from intent requests' do
+      body = JSON.generate({
+        session: { application: { applicationId: 'blah' }, user: { userId: 'userid' } },
+        request: { type: 'AudioPlayer.ABC' }
+      })
+      request = Request.extract_from_request_body(body)
+      expect(request.user_id).to eq('userid')
+    end
+
+    it 'should extract the user id from non-intent requests' do
+      body = JSON.generate({
+        context: { System: {
+          application: { applicationId: 'blah' },
+          user: { userId: 'userid' }
+        } },
+        request: { type: 'AudioPlayer.ABC' }
+      })
+      request = Request.extract_from_request_body(body)
+      expect(request.user_id).to eq('userid')
+    end
+  end
+
   describe 'valid?' do
     it 'should mark empty request bodies as invalid' do
       expect(Request.extract_from_request_body('').valid?).to be(false)
@@ -14,7 +37,7 @@ describe Request do
 
     it 'should mark unexpected app ids as invalid' do
       body = JSON.generate({
-        session: { application: { applicationId: 'invalid' } },
+        session: { application: { applicationId: 'invalid' }, user: { userId: 'userid' } },
         request: { type: 'AudioPlayer.ABC' }
       })
       expect(Request.extract_from_request_body(body).valid?).to be(false)
@@ -22,7 +45,18 @@ describe Request do
 
     it 'should mark expected app ids as valid' do
       body = JSON.generate({
-        session: { application: { applicationId: 'blah' } },
+        session: { application: { applicationId: 'blah' }, user: { userId: 'userid' } },
+        request: { type: 'AudioPlayer.ABC' }
+      })
+      expect(Request.extract_from_request_body(body).valid?).to be(true)
+    end
+
+    it 'should extract the app id from context if it\'s not an intent request' do
+      body = JSON.generate({
+        context: { System: {
+          application: { applicationId: 'blah' },
+          user: { userId: 'userid' }
+        } },
         request: { type: 'AudioPlayer.ABC' }
       })
       expect(Request.extract_from_request_body(body).valid?).to be(true)
@@ -30,7 +64,7 @@ describe Request do
 
     it 'should mark an invalid request_type as invalid' do
       body = JSON.generate({
-        session: { application: { applicationId: 'blah' } },
+        session: { application: { applicationId: 'blah' }, user: { userId: 'userid' } },
         request: { type: 'YoIdk' }
       })
       expect(Request.extract_from_request_body(body).valid?).to be(false)
@@ -40,7 +74,10 @@ describe Request do
   describe 'request_type' do
     it 'should use any AudioPlayer request as the request type' do
       body = JSON.generate({
-        session: { application: { applicationId: 'blah' } },
+        context: { System: {
+          application: { applicationId: 'blah' },
+          user: { userId: 'userid' }
+        } },
         request: { type: 'AudioPlayer.ABC' }
       })
       expect(Request.extract_from_request_body(body).request_type).to eq('AudioPlayer.ABC')
@@ -48,7 +85,7 @@ describe Request do
 
     it 'should use any the intent name for any intent request as the request type' do
       body = JSON.generate({
-        session: { application: { applicationId: 'blah' } },
+        session: { application: { applicationId: 'blah' }, user: { userId: 'userid' } },
         request: { type: 'IntentRequest', intent: { name: 'IntentName' } }
       })
       expect(Request.extract_from_request_body(body).request_type).to eq('IntentName')
@@ -56,7 +93,7 @@ describe Request do
 
     it 'should use nil as the request type for unexpected cases' do
       body = JSON.generate({
-        session: { application: { applicationId: 'blah' } },
+        session: { application: { applicationId: 'blah' }, user: { userId: 'userid' } },
         request: { type: 'YoIdk' }
       })
       expect(Request.extract_from_request_body(body).request_type).to be(nil)

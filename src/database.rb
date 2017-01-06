@@ -46,6 +46,15 @@ class Database
     end
   end
 
+  def is_valid_user?(user_id)
+    @db.get_first_value('SELECT COUNT(*) FROM user_playlist WHERE user_id=?', user_id) != 0
+  end
+
+  def get_current_track(user_id)
+    user_playlist_id, current_index, _ = get_playlist_info(user_id)
+    get_track_id_at_index(user_playlist_id, current_index)
+  end
+
   def get_next_track(user_id)
     get_track_id_at_index(*get_playlist_id_and_next_index(user_id))
   end

@@ -1,16 +1,21 @@
 class PlaybackRequests
-  def on_started(request, builder)
+  def self.on_started(request, builder)
+    builder.clear_response
   end
 
-  def on_finished(request, builder)
+  def self.on_finished(request, builder)
+    builder.clear_response
   end
 
-  def on_stopped(request, builder)
+  def self.on_stopped(request, builder)
+    builder.clear_response
   end
 
-  def on_nearly_finished(request, builder)
+  def self.on_nearly_finished(request, builder)
+    builder.clear_response
   end
 
-  def on_failed(request, builder)
+  def self.on_failed(request, builder)
+    builder.clear_response
   end
 end

@@ -24,7 +24,7 @@ class ResponseBuilder
       playBehavior: 'REPLACE_ALL',
       audioItem: {
         stream: {
-          url: Secrets::DOMAIN_WITH_HTTPS + "tracks/#{user_id}/#{track_id}",
+          url: "https://#{Secrets::DOMAIN}/tracks/#{user_id}/#{track_id}",
           token: track_id,
           offsetInMilliseconds: 0
         }

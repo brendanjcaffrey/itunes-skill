@@ -33,8 +33,8 @@ class Server < Sinatra::Base
     super do |server|
       server.ssl = true
       server.ssl_options = {
-        :cert_chain_file  => File.dirname(__FILE__) + '/../ssl/server.crt',
-        :private_key_file => File.dirname(__FILE__) + '/../ssl/server.key',
+        :cert_chain_file  => File.dirname(__FILE__) + "/../letsencrypt/config/live/#{Secrets::DOMAIN}/fullchain.pem",
+        :private_key_file => File.dirname(__FILE__) + "/../letsencrypt/config/live/#{Secrets::DOMAIN}/privkey.pem",
         :verify_peer      => false
       }
     end
@@ -42,7 +42,7 @@ class Server < Sinatra::Base
 
   get '/tracks/*/*' do
     user_id, track_id = params['splat']
-    raise Sinatra::NotFound if !Database.valid_user?(user_id)
+    raise Sinatra::NotFound if !Database.new.is_valid_user?(user_id)
 
     location = Library.get_location_for_track_id(track_id)
     ext = location.split('.').last

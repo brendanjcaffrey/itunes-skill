@@ -52,6 +52,14 @@ class Library
     end tell
   SCRIPT
 
+  TRACK_START_TIME = <<-SCRIPT
+    tell application "iTunes"
+      set thisTrack to some track whose persistent id is "%s"
+      set output to start of thisTrack
+      output
+    end tell
+  SCRIPT
+
   INCREMENT_PLAYED_COUNT = <<-SCRIPT
     tell application "iTunes"
       set thisTrack to some track whose persistent ID is "%s"
@@ -70,6 +78,11 @@ class Library
     # location looks like "Macintosh HD:Users:Brendan:Music:iTunes:iTunes Music:artist:album:song.mp3"
     # so we turn the : into / and remove the drive name
     `osascript -e '#{TRACK_LOCATION % id}'`.chomp.gsub(':', '/').gsub(/^.+?\//, '/')
+  end
+
+  def self.get_start_milliseconds_for_track_id(id)
+    # it's returned in seconds
+    `osascript -e '#{TRACK_START_TIME % id}'`.chomp.to_f * 1000.0
   end
 
   def self.add_play_for_track_id(id)

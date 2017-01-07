@@ -2,7 +2,7 @@ require 'rspec'
 require 'sqlite3'
 require_relative '../src/database.rb'
 
-class Database ; def self.set_database_name(name) ; @database_name = name ; end ; attr_reader :db ; end
+class Database ; def self.set_database_name(name) ; @database_name = name ; end ; attr_reader :sqlite ; end
 
 describe Database do
   before :each do
@@ -11,7 +11,7 @@ describe Database do
     File.delete(name) if File.exists?(name)
     Database.create_tables
     @db = Database.new
-    @sqlite = @db.db
+    @sqlite = @db.sqlite
   end
 
   describe 'create_or_replace_user_playlist' do
@@ -75,66 +75,44 @@ describe Database do
     end
   end
 
-  describe 'get_current_track' do
-    it 'should get the current track' do
-      @db.create_or_replace_user_playlist('USERID', ['TRACK0', 'TRACK1', 'TRACK2'])
-      expect(@db.get_current_track('USERID')).to eq('TRACK0')
-    end
+  it 'should update the current offset' do
+    @db.create_or_replace_user_playlist('USERID', ['TRACK0', 'TRACK1', 'TRACK2'])
+    @db.update_offset('USERID', 500)
+    expect(@sqlite.get_first_value('SELECT current_offset_in_milliseconds FROM user_playlist')).to eq(500)
   end
 
-  describe 'get_next_track' do
-    it 'should get the next track without advancing' do
-      @db.create_or_replace_user_playlist('USERID', ['TRACK0', 'TRACK1', 'TRACK2'])
-      expect(@db.get_next_track('USERID')).to eq('TRACK1')
-      expect(@db.get_next_track('USERID')).to eq('TRACK1')
-    end
+  it 'should get the current track and offset' do
+    @db.create_or_replace_user_playlist('USERID', ['TRACK0', 'TRACK1', 'TRACK2'])
+    @sqlite.execute('UPDATE user_playlist SET current_offset_in_milliseconds=500')
 
-    it 'should loop around' do
-      @db.create_or_replace_user_playlist('USERID', ['TRACK0', 'TRACK1', 'TRACK2'])
-      @sqlite.execute('UPDATE user_playlist SET current_index=2')
-      expect(@db.get_next_track('USERID')).to eq('TRACK0')
-      expect(@db.get_next_track('USERID')).to eq('TRACK0')
-    end
+    track_and_offset = @db.get_current_track_and_offset('USERID')
+    expect(track_and_offset.track_id).to eq('TRACK0')
+    expect(track_and_offset.offset_in_milliseconds).to eq(500)
   end
 
-  describe 'get_previous_track' do
-    it 'should get the next track without advancing' do
-      @db.create_or_replace_user_playlist('USERID', ['TRACK0', 'TRACK1', 'TRACK2'])
-      @sqlite.execute('UPDATE user_playlist SET current_index=1')
-      expect(@db.get_previous_track('USERID')).to eq('TRACK0')
-      expect(@db.get_previous_track('USERID')).to eq('TRACK0')
-    end
-
-    it 'should loop around' do
-      @db.create_or_replace_user_playlist('USERID', ['TRACK0', 'TRACK1', 'TRACK2'])
-      expect(@db.get_previous_track('USERID')).to eq('TRACK2')
-      expect(@db.get_previous_track('USERID')).to eq('TRACK2')
-    end
+  it 'should get the next track and update the current index', :only do
+    @db.create_or_replace_user_playlist('USERID', ['TRACK0', 'TRACK1', 'TRACK2', 'TRACK3'])
+    expect(@sqlite.get_first_value('SELECT current_index FROM user_playlist')).to eq(0)
+    expect(@db.get_next_track_and_update_playlist('USERID')).to eq('TRACK1')
+    expect(@sqlite.get_first_value('SELECT current_index FROM user_playlist')).to eq(1)
+    expect(@db.get_next_track_and_update_playlist('USERID')).to eq('TRACK2')
+    expect(@sqlite.get_first_value('SELECT current_index FROM user_playlist')).to eq(2)
+    expect(@db.get_next_track_and_update_playlist('USERID')).to eq('TRACK3')
+    expect(@sqlite.get_first_value('SELECT current_index FROM user_playlist')).to eq(3)
+    expect(@db.get_next_track_and_update_playlist('USERID')).to eq('TRACK0')
+    expect(@sqlite.get_first_value('SELECT current_index FROM user_playlist')).to eq(0)
   end
 
-  describe 'increment_playlist_index' do
-    it 'should increment and loop' do
-      @db.create_or_replace_user_playlist('USERID', ['TRACK0', 'TRACK1', 'TRACK2'])
-      expect(@sqlite.get_first_value('SELECT current_index FROM user_playlist')).to eq(0)
-      @db.increment_playlist_index('USERID')
-      expect(@sqlite.get_first_value('SELECT current_index FROM user_playlist')).to eq(1)
-      @db.increment_playlist_index('USERID')
-      expect(@sqlite.get_first_value('SELECT current_index FROM user_playlist')).to eq(2)
-      @db.increment_playlist_index('USERID')
-      expect(@sqlite.get_first_value('SELECT current_index FROM user_playlist')).to eq(0)
-    end
-  end
-
-  describe 'decrement_playlist_index' do
-    it 'should decrement and loop' do
-      @db.create_or_replace_user_playlist('USERID', ['TRACK0', 'TRACK1', 'TRACK2'])
-      expect(@sqlite.get_first_value('SELECT current_index FROM user_playlist')).to eq(0)
-      @db.decrement_playlist_index('USERID')
-      expect(@sqlite.get_first_value('SELECT current_index FROM user_playlist')).to eq(2)
-      @db.decrement_playlist_index('USERID')
-      expect(@sqlite.get_first_value('SELECT current_index FROM user_playlist')).to eq(1)
-      @db.decrement_playlist_index('USERID')
-      expect(@sqlite.get_first_value('SELECT current_index FROM user_playlist')).to eq(0)
-    end
+  it 'should get the previous track and update the current index' do
+    @db.create_or_replace_user_playlist('USERID', ['TRACK0', 'TRACK1', 'TRACK2', 'TRACK3'])
+    expect(@sqlite.get_first_value('SELECT current_index FROM user_playlist')).to eq(0)
+    expect(@db.get_previous_track_and_update_playlist('USERID')).to eq('TRACK3')
+    expect(@sqlite.get_first_value('SELECT current_index FROM user_playlist')).to eq(3)
+    expect(@db.get_previous_track_and_update_playlist('USERID')).to eq('TRACK2')
+    expect(@sqlite.get_first_value('SELECT current_index FROM user_playlist')).to eq(2)
+    expect(@db.get_previous_track_and_update_playlist('USERID')).to eq('TRACK1')
+    expect(@sqlite.get_first_value('SELECT current_index FROM user_playlist')).to eq(1)
+    expect(@db.get_previous_track_and_update_playlist('USERID')).to eq('TRACK0')
+    expect(@sqlite.get_first_value('SELECT current_index FROM user_playlist')).to eq(0)
   end
 end

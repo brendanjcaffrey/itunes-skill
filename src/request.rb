@@ -1,8 +1,8 @@
 class Request
-  attr_reader :user_id, :request_type
+  attr_reader :user_id, :request_type, :offset_in_milliseconds
 
   def self.extract_from_request_body(body)
-    return new(nil, nil, nil) if body.empty?
+    return new(nil, nil, nil, nil) if body.empty?
 
     request = JSON.parse(body)
     if request.has_key?('session')
@@ -22,13 +22,20 @@ class Request
       request_type = nil
     end
 
-    new(app_id, user_id, request_type)
+    if request.has_key?('context') && request['context'].has_key?('AudioPlayer')
+      offset_in_milliseconds = request['context']['AudioPlayer']['offsetInMilliseconds']
+    else
+      offset_in_milliseconds = 0
+    end
+
+    new(app_id, user_id, request_type, offset_in_milliseconds)
   end
 
-  def initialize(app_id, user_id, request_type)
+  def initialize(app_id, user_id, request_type, offset_in_milliseconds)
     @app_id = app_id
     @request_type = request_type
     @user_id = user_id
+    @offset_in_milliseconds = offset_in_milliseconds
   end
 
   def valid?

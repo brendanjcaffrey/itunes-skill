@@ -99,4 +99,33 @@ describe Request do
       expect(Request.extract_from_request_body(body).request_type).to be(nil)
     end
   end
+
+  describe 'offset_in_milliseconds' do
+    it 'should extract the offset_in_milliseconds if it\'s there' do
+      body = JSON.generate({
+        context: {
+          AudioPlayer: { offsetInMilliseconds: 500 },
+          System: {
+            application: { applicationId: 'blah' },
+            user: { userId: 'userid' }
+          }
+        },
+        request: { type: 'AudioPlayer.ABC' }
+      })
+      request = Request.extract_from_request_body(body)
+      expect(request.offset_in_milliseconds).to eq(500)
+    end
+
+    it 'should be 0 otherwise' do
+      body = JSON.generate({
+        context: { System: {
+          application: { applicationId: 'blah' },
+          user: { userId: 'userid' }
+        } },
+        request: { type: 'AudioPlayer.ABC' }
+      })
+      request = Request.extract_from_request_body(body)
+      expect(request.offset_in_milliseconds).to eq(0)
+    end
+  end
 end

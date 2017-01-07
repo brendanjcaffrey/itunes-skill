@@ -17,7 +17,7 @@ class ResponseBuilder
     }
   end
 
-  def add_play_directive(user_id, track_id)
+  def add_play_directive(user_id, track_id, offset_in_milliseconds = 0)
     @response[:response][:directives] ||= []
     @response[:response][:directives] << {
       type: 'AudioPlayer.Play',
@@ -26,7 +26,7 @@ class ResponseBuilder
         stream: {
           url: "https://#{Secrets::DOMAIN}/tracks/#{user_id}/#{track_id}",
           token: track_id,
-          offsetInMilliseconds: 0
+          offsetInMilliseconds: offset_in_milliseconds
         }
       }
     }

@@ -1,7 +1,9 @@
 require 'json'
+require 'thin'
 require 'sinatra/base'
 require 'sinatra/json'
 require 'sqlite3'
+require 'time'
 
 require_relative 'control_intents.rb'
 require_relative 'custom_intents.rb'
@@ -46,7 +48,7 @@ class Server < Sinatra::Base
 
     location = Library.get_location_for_track_id(track_id)
     ext = location.split('.').last
-    send_file(location, type: ext)
+    send_file(location, type: ext, last_modified: Time.now.httpdate)
   end
 
   post '/itunes' do
@@ -55,11 +57,9 @@ class Server < Sinatra::Base
     raise Sinatra::NotFound unless request.valid?
 
     response = Dispatcher.dispatch_request(request)
-    if response
-      content_type :json
-      json response
-    else
-      halt
-    end
+    halt unless response
+
+    content_type :json
+    json response
   end
 end

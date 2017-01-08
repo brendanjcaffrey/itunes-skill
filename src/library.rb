@@ -82,7 +82,7 @@ class Library
 
   def self.get_start_milliseconds_for_track_id(id)
     # it's returned in seconds
-    `osascript -e '#{TRACK_START_TIME % id}'`.chomp.to_f * 1000.0
+    (`osascript -e '#{TRACK_START_TIME % id}'`.chomp.to_f * 1000.0).to_i
   end
 
   def self.add_play_for_track_id(id)

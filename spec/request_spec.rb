@@ -128,4 +128,33 @@ describe Request do
       expect(request.offset_in_milliseconds).to eq(0)
     end
   end
+
+  describe 'token' do
+    it 'should extract the token if it\'s there' do
+      body = JSON.generate({
+        context: {
+          AudioPlayer: { offsetInMilliseconds: 500, token: 'hi' },
+          System: {
+            application: { applicationId: 'blah' },
+            user: { userId: 'userid' }
+          }
+        },
+        request: { type: 'AudioPlayer.ABC' }
+      })
+      request = Request.extract_from_request_body(body)
+      expect(request.token).to eq('hi')
+    end
+
+    it 'should be nil otherwise' do
+      body = JSON.generate({
+        context: { System: {
+          application: { applicationId: 'blah' },
+          user: { userId: 'userid' }
+        } },
+        request: { type: 'AudioPlayer.ABC' }
+      })
+      request = Request.extract_from_request_body(body)
+      expect(request.token).to be(nil)
+    end
+  end
 end

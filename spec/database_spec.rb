@@ -1,15 +1,10 @@
 require 'rspec'
 require 'sqlite3'
-require_relative '../src/database.rb'
-
-class Database ; def self.set_database_name(name) ; @database_name = name ; end ; attr_reader :sqlite ; end
+require_relative 'spec_helper.rb'
 
 describe Database do
   before :each do
-    name = 'itunes_skill_test.db'
-    Database.set_database_name(name)
-    File.delete(name) if File.exists?(name)
-    Database.create_tables
+    Database.create_test_database
     @db = Database.new
     @sqlite = @db.sqlite
   end
@@ -75,6 +70,30 @@ describe Database do
     end
   end
 
+  describe 'next_enqueued' do
+    it 'should return initialize to 0' do
+      @db.create_or_replace_user_playlist('USERID', ['TRACK0', 'TRACK1', 'TRACK2'])
+      expect(@sqlite.get_first_value('SELECT next_enqueued FROM user_playlist')).to eq(0)
+    end
+
+    it 'should update' do
+      @db.create_or_replace_user_playlist('USERID', ['TRACK0', 'TRACK1', 'TRACK2'])
+      @db.set_is_next_track_enqueued('USERID', true)
+      expect(@sqlite.get_first_value('SELECT next_enqueued FROM user_playlist')).to eq(1)
+      @db.set_is_next_track_enqueued('USERID', false)
+      expect(@sqlite.get_first_value('SELECT next_enqueued FROM user_playlist')).to eq(0)
+    end
+
+    it 'should return as a bool' do
+      @db.create_or_replace_user_playlist('USERID', ['TRACK0', 'TRACK1', 'TRACK2'])
+      expect(@db.is_next_track_enqueued?('USERID')).to be(false)
+      @sqlite.execute('UPDATE user_playlist SET next_enqueued=1')
+      expect(@db.is_next_track_enqueued?('USERID')).to be(true)
+      @sqlite.execute('UPDATE user_playlist SET next_enqueued=0')
+      expect(@db.is_next_track_enqueued?('USERID')).to be(false)
+    end
+  end
+
   it 'should update the current offset' do
     @db.create_or_replace_user_playlist('USERID', ['TRACK0', 'TRACK1', 'TRACK2'])
     @db.update_offset('USERID', 500)
@@ -90,7 +109,15 @@ describe Database do
     expect(track_and_offset.offset_in_milliseconds).to eq(500)
   end
 
-  it 'should get the next track and update the current index', :only do
+  it 'should get the next track without updating the playlist' do
+    @db.create_or_replace_user_playlist('USERID', ['TRACK0', 'TRACK1', 'TRACK2'])
+    expect(@sqlite.get_first_value('SELECT current_index FROM user_playlist')).to eq(0)
+    expect(@db.get_next_track('USERID')).to eq('TRACK1')
+    expect(@db.get_next_track('USERID')).to eq('TRACK1')
+    expect(@sqlite.get_first_value('SELECT current_index FROM user_playlist')).to eq(0)
+  end
+
+  it 'should get the next track and update the current index' do
     @db.create_or_replace_user_playlist('USERID', ['TRACK0', 'TRACK1', 'TRACK2', 'TRACK3'])
     expect(@sqlite.get_first_value('SELECT current_index FROM user_playlist')).to eq(0)
     expect(@db.get_next_track_and_update_playlist('USERID')).to eq('TRACK1')

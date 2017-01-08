@@ -16,7 +16,8 @@ class Database
         user_id TEXT,
         current_index INTEGER,
         total_entries INTEGER,
-        current_offset_in_milliseconds INTEGER
+        current_offset_in_milliseconds INTEGER,
+        next_enqueued BOOLEAN
       );
     SQL
     db.execute <<-SQL
@@ -40,7 +41,7 @@ class Database
       @sqlite.execute('DELETE FROM user_playlist_entry WHERE user_playlist_id=?', rows[0][0].to_i);
     end
 
-    @sqlite.execute('INSERT INTO user_playlist (user_id, current_index, total_entries, current_offset_in_milliseconds) VALUES (?, 0, ?, 0);', user_id, track_ids.count)
+    @sqlite.execute('INSERT INTO user_playlist (user_id, current_index, total_entries, current_offset_in_milliseconds, next_enqueued) VALUES (?, 0, ?, 0, 0);', user_id, track_ids.count)
     user_playlist_id = @sqlite.last_insert_row_id
 
     track_ids.each_with_index do |track_id, index|
@@ -53,6 +54,14 @@ class Database
     @sqlite.get_first_value('SELECT COUNT(*) FROM user_playlist WHERE user_id=?', user_id) != 0
   end
 
+  def is_next_track_enqueued?(user_id)
+    @sqlite.get_first_value('SELECT next_enqueued FROM user_playlist WHERE user_id=?', user_id) == 1 ? true : false
+  end
+
+  def set_is_next_track_enqueued(user_id, value)
+    @sqlite.get_first_value('UPDATE user_playlist SET next_enqueued=? WHERE user_id=?', value ? 1 : 0, user_id)
+  end
+
   def update_offset(user_id, offset_in_milliseconds)
     @sqlite.execute('UPDATE user_playlist SET current_offset_in_milliseconds=? WHERE user_id=?', offset_in_milliseconds, user_id)
   end
@@ -62,11 +71,13 @@ class Database
     TrackIdAndOffset.new(get_track_id_at_index(playlist.id, playlist.current_index), playlist.current_offset_in_milliseconds)
   end
 
-  def get_next_track_and_update_playlist(user_id)
-    playlist = get_user_playlist(user_id)
-    new_playlist_index = playlist.current_index + 1
-    new_playlist_index = 0 if new_playlist_index >= playlist.total_entries
+  def get_next_track(user_id)
+    playlist, new_playlist_index = get_playlist_and_next_track_index(user_id)
+    get_track_id_at_index(playlist.id, new_playlist_index)
+  end
 
+  def get_next_track_and_update_playlist(user_id)
+    playlist, new_playlist_index = get_playlist_and_next_track_index(user_id)
     update_current_index_and_get_track(playlist.id, new_playlist_index)
   end
 
@@ -84,6 +95,14 @@ class Database
     rows = @sqlite.execute('SELECT id, current_index, total_entries, current_offset_in_milliseconds FROM user_playlist WHERE user_id=?', user_id)
     raise UserIdNotFoundException.new if rows.empty?
     UserPlaylist.new(*rows[0])
+  end
+
+  def get_playlist_and_next_track_index(user_id)
+    playlist = get_user_playlist(user_id)
+    new_playlist_index = playlist.current_index + 1
+    new_playlist_index = 0 if new_playlist_index >= playlist.total_entries
+
+    [playlist, new_playlist_index]
   end
 
   def update_current_index_and_get_track(user_playlist_id, new_index)

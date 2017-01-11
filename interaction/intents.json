@@ -2,7 +2,13 @@
     "intents": [
         {
             "intent": "Play",
-            "slots": []
+            "slots": [
+                { "name": "playlist", "type": "AMAZON.MusicPlaylist"  },
+                { "name": "artist",   "type": "AMAZON.MusicGroup"     },
+                { "name": "genre",    "type": "AMAZON.Genre"          },
+                { "name": "song",     "type": "AMAZON.MusicRecording" },
+                { "name": "album",    "type": "AMAZON.MusicAlbum"     }
+            ]
         },
         {
             "intent": "AMAZON.CancelIntent"

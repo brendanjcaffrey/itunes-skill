@@ -9,7 +9,7 @@ describe PlaybackRequests do
     @db = Database.new
     @playback_requests = PlaybackRequests.new(@db)
     @builder = instance_double('ResponseBuilder')
-    @nil_request = Request.new(nil, nil, nil, nil, nil)
+    @nil_request = Request.new(nil, nil, nil, nil, nil, nil)
 
     @db.create_or_replace_user_playlist('USERID', ['TRACK0', 'TRACK1', 'TRACK2'])
     expect(@db.is_next_track_enqueued?('USERID')).to be(false)
@@ -38,7 +38,7 @@ describe PlaybackRequests do
 
   context 'on_nearly_finished' do
     it 'should enqueue the next track if the token matches what\'s currently playing' do
-      request = Request.new(nil, 'USERID', nil, 0, 'TRACK0')
+      request = Request.new(nil, 'USERID', nil, nil, 0, 'TRACK0')
       expect(Library).to receive(:get_start_milliseconds_for_track_id).with('TRACK1').and_return(1000)
       expect(@builder).to receive(:add_enqueue_directive).with('USERID', 'TRACK1', 'TRACK0', 1000)
       @playback_requests.on_nearly_finished(request, @builder)
@@ -50,7 +50,7 @@ describe PlaybackRequests do
       @db.set_is_next_track_enqueued('USERID', true)
       expect(@db.is_next_track_enqueued?('USERID')).to be(true)
 
-      request = Request.new(nil, 'USERID', nil, 0, 'TRACK0')
+      request = Request.new(nil, 'USERID', nil, nil, 0, 'TRACK0')
       expect(@builder).to receive(:clear_response)
       @playback_requests.on_nearly_finished(request, @builder)
 
@@ -58,7 +58,7 @@ describe PlaybackRequests do
     end
 
     it 'should ignore the request if the current track doesn\'t match the token' do
-      request = Request.new(nil, 'USERID', nil, 0, 'TRACK1')
+      request = Request.new(nil, 'USERID', nil, nil, 0, 'TRACK1')
       expect(@builder).to receive(:clear_response)
       @playback_requests.on_nearly_finished(request, @builder)
     end
@@ -70,12 +70,12 @@ describe PlaybackRequests do
     end
 
     it 'should ignore the request if the current track id is the same as the token' do
-      request = Request.new(nil, 'USERID', nil, 0, 'TRACK0')
+      request = Request.new(nil, 'USERID', nil, nil, 0, 'TRACK0')
       @playback_requests.on_started(request, @builder)
     end
 
     it 'should ignore if the token isn\'t equal to the next track' do
-      request = Request.new(nil, 'USERID', nil, 0, 'TRACK2')
+      request = Request.new(nil, 'USERID', nil, nil, 0, 'TRACK2')
       @playback_requests.on_started(request, @builder)
     end
 
@@ -84,7 +84,7 @@ describe PlaybackRequests do
       expect(@db.is_next_track_enqueued?('USERID')).to be(true)
       expect(Library).to receive(:add_play_for_track_id).with('TRACK0')
 
-      request = Request.new(nil, 'USERID', nil, 0, 'TRACK1')
+      request = Request.new(nil, 'USERID', nil, nil, 0, 'TRACK1')
       @playback_requests.on_started(request, @builder)
 
       expect(@db.get_current_track_and_offset('USERID').track_id).to eq('TRACK1')

@@ -1,1 +1,12 @@
-Play play
+Play play songs
+Play play music
+Play play {playlist}
+Play play the playlist {playlist}
+Play play {artist}
+Play play songs by {artist}
+Play play {genre}
+Play play {genre} songs
+Play play {song}
+Play play the song {song}
+Play play {album}
+Play play the album {album}

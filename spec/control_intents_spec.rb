@@ -9,7 +9,7 @@ describe ControlIntents do
     @db = Database.new
     @control_intents = ControlIntents.new(@db)
     @builder = instance_double('ResponseBuilder')
-    @user_id_request = Request.new(nil, 'USERID', nil, nil, nil)
+    @user_id_request = Request.new(nil, 'USERID', nil, nil, nil, nil)
 
     @db.create_or_replace_user_playlist('USERID', ['TRACK0', 'TRACK1', 'TRACK2'])
     @db.set_is_next_track_enqueued('USERID', true)
@@ -44,7 +44,7 @@ describe ControlIntents do
   context 'on_pause' do
     it 'should store the offset from the request, clear the enqueued flag and clear the queue/stop' do
       expect(@builder).to receive(:add_clear_enqueued_and_stop_directives)
-      @control_intents.on_pause(Request.new(nil, 'USERID', nil, 250, nil), @builder)
+      @control_intents.on_pause(Request.new(nil, 'USERID', nil, nil, 250, nil), @builder)
 
       expect(@db.is_next_track_enqueued?('USERID')).to be(false)
       expect_current_track_and_offset('TRACK0', 250)
@@ -94,7 +94,7 @@ describe ControlIntents do
       expect(@builder).to receive(:add_clear_all_directive)
       expect(Library).to receive(:get_start_milliseconds_for_track_id).with('TRACK0').and_return(200)
 
-      @control_intents.on_stop(Request.new(nil, 'USERID', nil, 250, nil), @builder)
+      @control_intents.on_stop(Request.new(nil, 'USERID', nil, nil, 250, nil), @builder)
 
       expect(@db.is_next_track_enqueued?('USERID')).to be(false)
       expect_current_track_and_offset('TRACK0', 200)

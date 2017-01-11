@@ -9,7 +9,7 @@ describe Database do
     @sqlite = @db.sqlite
   end
 
-  describe 'create_or_replace_user_playlist' do
+  context 'create_or_replace_user_playlist' do
     it 'should create a new playlist' do
       @db.create_or_replace_user_playlist('USERID', ['TRACK0', 'TRACK1'])
 
@@ -58,7 +58,28 @@ describe Database do
     end
   end
 
-  describe 'is_valid_user?' do
+  context 'append_tracks' do
+    it 'should work from 3' do
+      @db.create_or_replace_user_playlist('USERID', ['TRACK0', 'TRACK1', 'TRACK3'])
+      @db.append_tracks('USERID', ['TRACK4', 'TRACK5'])
+
+      expect(@sqlite.get_first_value('SELECT COUNT(*) FROM user_playlist_entry')).to eq(5)
+      expect(@sqlite.get_first_value('SELECT total_entries FROM user_playlist')).to eq(5)
+      expect(@sqlite.get_first_value('SELECT playlist_index FROM user_playlist_entry WHERE persistent_id=?', 'TRACK4')).to eq(3)
+      expect(@sqlite.get_first_value('SELECT playlist_index FROM user_playlist_entry WHERE persistent_id=?', 'TRACK5')).to eq(4)
+    end
+
+    it 'should work from 5' do
+      @db.create_or_replace_user_playlist('USERID', ['TRACK0', 'TRACK1', 'TRACK3', 'TRACK4', 'TRACK5'])
+      @db.append_tracks('USERID', ['TRACK6'])
+
+      expect(@sqlite.get_first_value('SELECT COUNT(*) FROM user_playlist_entry')).to eq(6)
+      expect(@sqlite.get_first_value('SELECT total_entries FROM user_playlist')).to eq(6)
+      expect(@sqlite.get_first_value('SELECT playlist_index FROM user_playlist_entry WHERE persistent_id=?', 'TRACK6')).to eq(5)
+    end
+  end
+
+  context 'is_valid_user?' do
     it 'should return true if there\'s a playlist in the database' do
       @db.create_or_replace_user_playlist('USERID', ['TRACK0', 'TRACK1', 'TRACK2'])
       expect(@db.is_valid_user?('USERID')).to be(true)
@@ -70,7 +91,7 @@ describe Database do
     end
   end
 
-  describe 'next_enqueued' do
+  context 'next_enqueued' do
     it 'should return initialize to 0' do
       @db.create_or_replace_user_playlist('USERID', ['TRACK0', 'TRACK1', 'TRACK2'])
       expect(@sqlite.get_first_value('SELECT next_enqueued FROM user_playlist')).to eq(0)

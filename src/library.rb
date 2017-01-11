@@ -29,13 +29,40 @@ class Library
     end tell
   SCRIPT
 
-  PLAYLIST_TRACKS = <<-SCRIPT
+  LIBRARY_PLAYLIST = <<-SCRIPT
+    tell application "iTunes"
+      set output to ""
+      set playlistCount to count of playlists
+
+      #{SET_DELIMS}
+      repeat with i from 1 to playlistCount
+        set thisPlaylist to playlist i
+        set playlistKind to special kind of thisPlaylist as string
+        if playlistKind is equal to "Music" then
+          set playlistId to persistent id of thisPlaylist
+          set playlistName to name of thisPlaylist
+          set output to playlistId & " " & playlistName
+        end if
+      end repeat
+      #{RESET_DELIMS}
+
+      output
+    end tell
+  SCRIPT
+
+  FIRST_FIVE_PLAYLIST_TRACKS = <<-SCRIPT
     tell application "iTunes"
       set output to ""
       set thisPlaylist to some playlist whose persistent id is "%s"
+      set tracksCount to count of file tracks of thisPlaylist
+      set loopCount to 5
+      if tracksCount < 5 then
+        set loopCount to tracksCount
+      end if
 
       #{SET_DELIMS}
-      repeat with thisTrack in file tracks of thisPlaylist
+      repeat with i from 1 to loopCount
+        set thisTrack to file track i of thisPlaylist
         set output to output & persistent id of thisTrack & "\n"
       end repeat
       #{RESET_DELIMS}
@@ -43,6 +70,42 @@ class Library
       output
     end tell
   SCRIPT
+
+  PLAYLIST_TRACKS = <<-SCRIPT
+    tell application "iTunes"
+      set output to ""
+      set thisPlaylist to some playlist whose persistent id is "%s"
+      set theTracks to (every file track of thisPlaylist)
+
+      #{SET_DELIMS}
+      repeat with theTrack in theTracks
+        set output to output & persistent id of theTrack & "\n"
+      end repeat
+      #{RESET_DELIMS}
+
+      output
+    end tell
+  SCRIPT
+
+  FILTER_TRACKS = <<-SCRIPT
+    tell application "iTunes"
+      set output to ""
+      set theTracks to (every file track of playlist "Library" whose %s contains "%s")
+
+      #{SET_DELIMS}
+      repeat with theTrack in theTracks
+        set output to output & persistent id of theTrack & "\n"
+      end repeat
+      #{RESET_DELIMS}
+
+      output
+    end tell
+  SCRIPT
+
+  ARTIST_TRACKS = FILTER_TRACKS % ['artist', '%s']
+  ALBUM_TRACKS  = FILTER_TRACKS % ['album',  '%s']
+  SONG_TRACKS   = FILTER_TRACKS % ['name',   '%s']
+  GENRE_TRACKS  = FILTER_TRACKS % ['genre',  '%s']
 
   TRACK_LOCATION = <<-SCRIPT
     tell application "iTunes"
@@ -67,11 +130,38 @@ class Library
     end tell
   SCRIPT
 
-  def self.get_tracks_from_playlist_matching(term)
-    playlist = get_matching_playlist(term)
-    return [] unless playlist
+  def self.get_playlist_matching_term(term)
+    playlists = get_all_matching_playlists(term)
+    filter_playlists(playlists, term)
+  end
 
-    get_tracks_for_playlist(playlist)
+  def self.get_library_playlist
+    output = `osascript -e '#{LIBRARY_PLAYLIST}'`
+    Playlist.new(*output.chomp.split(' ', 2))
+  end
+
+  def self.get_first_five_tracks_from_playlist(playlist)
+    `osascript -e '#{FIRST_FIVE_PLAYLIST_TRACKS % playlist.id}'`.split("\n")
+  end
+
+  def self.get_tracks_from_playlist(playlist)
+    `osascript -e '#{PLAYLIST_TRACKS % playlist.id}'`.split("\n")
+  end
+
+  def self.get_tracks_for_artist_matching(artist)
+    `osascript -e '#{ARTIST_TRACKS % artist}'`.split("\n")
+  end
+
+  def self.get_tracks_for_album_matching(album)
+    `osascript -e '#{ALBUM_TRACKS % album}'`.split("\n")
+  end
+
+  def self.get_tracks_for_song_matching(song)
+    `osascript -e '#{SONG_TRACKS % song}'`.split("\n")
+  end
+
+  def self.get_tracks_for_genre_matching(genre)
+    `osascript -e '#{GENRE_TRACKS % genre}'`.split("\n")
   end
 
   def self.get_location_for_track_id(id)
@@ -91,11 +181,6 @@ class Library
 
   private
 
-  def self.get_matching_playlist(term)
-    playlists = get_all_matching_playlists(term)
-    filter_playlists(playlists, term)
-  end
-
   def self.filter_playlists(playlists, term)
     return nil if playlists.count == 0
 
@@ -108,10 +193,6 @@ class Library
 
     # otherwise, give up and use the first one
     playlists.first
-  end
-
-  def self.get_tracks_for_playlist(playlist)
-    `osascript -e '#{PLAYLIST_TRACKS % playlist.id}'`.split("\n")
   end
 
   def self.get_all_matching_playlists(term)

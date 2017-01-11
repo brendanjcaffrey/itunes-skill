@@ -50,6 +50,18 @@ class Database
     end
   end
 
+  def append_tracks(user_id, track_ids)
+    user_playlist_id = @sqlite.get_first_value('SELECT id FROM user_playlist WHERE user_id=?', user_id)
+    first_index = @sqlite.get_first_value('SELECT COUNT(*) FROM user_playlist_entry WHERE user_playlist_id=?', user_playlist_id)
+
+    track_ids.each_with_index do |track_id, index|
+      @sqlite.execute('INSERT INTO user_playlist_entry (user_playlist_id, playlist_index, persistent_id) VALUES (?, ?, ?)',
+                  user_playlist_id, index + first_index, track_id)
+    end
+
+    @sqlite.execute('UPDATE user_playlist SET total_entries=? WHERE id=?', first_index + track_ids.count, user_playlist_id)
+  end
+
   def is_valid_user?(user_id)
     @sqlite.get_first_value('SELECT COUNT(*) FROM user_playlist WHERE user_id=?', user_id) != 0
   end

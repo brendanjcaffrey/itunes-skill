@@ -86,7 +86,7 @@ describe Request do
     it 'should use any the intent name for any intent request as the request type' do
       body = JSON.generate({
         session: { application: { applicationId: 'blah' }, user: { userId: 'userid' } },
-        request: { type: 'IntentRequest', intent: { name: 'IntentName' } }
+        request: { type: 'IntentRequest', intent: { name: 'IntentName', slots: {} } }
       })
       expect(Request.extract_from_request_body(body).request_type).to eq('IntentName')
     end
@@ -155,6 +155,45 @@ describe Request do
       })
       request = Request.extract_from_request_body(body)
       expect(request.token).to be(nil)
+    end
+  end
+
+  describe 'slots' do
+    it 'should extract and filter the slots without values if it\'s there' do
+      body = JSON.generate({
+        session: { application: { applicationId: 'blah' }, user: { userId: 'userid' } },
+        request: {
+          type: 'IntentRequest',
+          intent: {
+            name: 'IntentName',
+            slots: { song: { name: 'song' }, artist: { name: 'artist', value: 'yo' } }
+          }
+        }
+      })
+      request = Request.extract_from_request_body(body)
+      expect(request.slots.count).to eq(1)
+      expect(request.slots['artist']).to eq('yo')
+    end
+
+    it 'should allow slots not to be there even when intent is there' do
+      body = JSON.generate({
+        session: { application: { applicationId: 'blah' }, user: { userId: 'userid' } },
+        request: { type: 'IntentRequest', intent: { name: 'IntentName' } }
+      })
+      request = Request.extract_from_request_body(body)
+      expect(request.slots).to be(nil)
+    end
+
+    it 'should be nil otherwise' do
+      body = JSON.generate({
+        context: { System: {
+          application: { applicationId: 'blah' },
+          user: { userId: 'userid' }
+        } },
+        request: { type: 'AudioPlayer.ABC' }
+      })
+      request = Request.extract_from_request_body(body)
+      expect(request.slots).to be(nil)
     end
   end
 end

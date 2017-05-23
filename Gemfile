@@ -1,6 +1,7 @@
 source 'https://rubygems.org'
 
 gem 'rake'
+gem 'rack', '<2.0'
 gem 'sinatra', '~> 1.4.7'
 gem 'sinatra-json'
 gem 'sqlite3'

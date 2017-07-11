@@ -41,6 +41,12 @@ class Request
       next unless slot.has_key?('value')
       filtered[slot['name']] = slot['value']
     end
+
+    # Alexa ask iTunes to play the song Champion -> filtered['songs'] = "the song Champion"
+    if filtered['song'] && filtered['song'].include?('the song ')
+      filtered['song'].gsub!('the song ', '')
+    end
+
     filtered
   end
 

@@ -10,7 +10,7 @@ class Library
   SCRIPT
 
   PLAYLISTS = <<-SCRIPT
-    tell application "iTunes"
+    tell application "Music"
       set output to ""
       set playlistCount to count of playlists
 
@@ -30,7 +30,7 @@ class Library
   SCRIPT
 
   LIBRARY_PLAYLIST = <<-SCRIPT
-    tell application "iTunes"
+    tell application "Music"
       set output to ""
       set playlistCount to count of playlists
 
@@ -51,7 +51,7 @@ class Library
   SCRIPT
 
   FIRST_FIVE_PLAYLIST_TRACKS = <<-SCRIPT
-    tell application "iTunes"
+    tell application "Music"
       set output to ""
       set thisPlaylist to some playlist whose persistent id is "%s"
       set tracksCount to count of file tracks of thisPlaylist
@@ -72,7 +72,7 @@ class Library
   SCRIPT
 
   PLAYLIST_TRACKS = <<-SCRIPT
-    tell application "iTunes"
+    tell application "Music"
       set output to ""
       set thisPlaylist to some playlist whose persistent id is "%s"
       set theTracks to (every file track of thisPlaylist)
@@ -88,7 +88,7 @@ class Library
   SCRIPT
 
   FILTER_TRACKS = <<-SCRIPT
-    tell application "iTunes"
+    tell application "Music"
       set output to ""
       set theTracks to (every file track of playlist "Library" whose %s contains "%s")
 
@@ -108,7 +108,7 @@ class Library
   GENRE_TRACKS  = FILTER_TRACKS % ['genre',  '%s']
 
   TRACK_LOCATION = <<-SCRIPT
-    tell application "iTunes"
+    tell application "Music"
       set thisTrack to some track whose persistent id is "%s"
       set output to location of thisTrack as text
       output
@@ -116,7 +116,7 @@ class Library
   SCRIPT
 
   TRACK_START_TIME = <<-SCRIPT
-    tell application "iTunes"
+    tell application "Music"
       set thisTrack to some track whose persistent id is "%s"
       set output to start of thisTrack
       output
@@ -124,7 +124,7 @@ class Library
   SCRIPT
 
   INCREMENT_PLAYED_COUNT = <<-SCRIPT
-    tell application "iTunes"
+    tell application "Music"
       set thisTrack to some track whose persistent ID is "%s"
       set played count of thisTrack to (played count of thisTrack) + 1
     end tell

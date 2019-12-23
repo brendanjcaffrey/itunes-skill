@@ -7,7 +7,7 @@ GEM
     eventmachine (1.2.3)
     multi_json (1.12.1)
     rack (1.6.8)
-    rack-protection (1.5.3)
+    rack-protection (1.5.5)
       rack
     rake (0.9.6)
     rspec (3.6.0)

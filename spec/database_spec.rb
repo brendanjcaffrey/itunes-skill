@@ -13,9 +13,9 @@ describe Database do
     it 'should create a new playlist' do
       @db.create_or_replace_user_playlist('USERID', ['TRACK0', 'TRACK1'])
 
-      row = @sqlite.execute('SELECT id, user_id, current_index, total_entries FROM user_playlist')[0]
+      row = @sqlite.execute('SELECT id, hashed_user_id, current_index, total_entries FROM user_playlist')[0]
       playlist_id = row[0]
-      expect(row[1]).to eq('USERID')
+      expect(row[1]).to eq('7541ef28f697b02fb3a3643b686655a9')
       expect(row[2]).to eq(0)
       expect(row[3]).to eq(2)
 
@@ -36,9 +36,9 @@ describe Database do
       @db.create_or_replace_user_playlist('USERID', ['TRACK0', 'TRACK1'])
       @db.create_or_replace_user_playlist('USERID', ['TRACK2', 'TRACK3', 'TRACK4'])
 
-      row = @sqlite.execute('SELECT id, user_id, current_index, total_entries FROM user_playlist')[0]
+      row = @sqlite.execute('SELECT id, hashed_user_id, current_index, total_entries FROM user_playlist')[0]
       playlist_id = row[0]
-      expect(row[1]).to eq('USERID')
+      expect(row[1]).to eq('7541ef28f697b02fb3a3643b686655a9')
       expect(row[2]).to eq(0)
       expect(row[3]).to eq(3)
 

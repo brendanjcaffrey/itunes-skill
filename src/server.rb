@@ -1,4 +1,3 @@
-require 'digest'
 require 'json'
 require 'thin'
 require 'sinatra/base'

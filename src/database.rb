@@ -1,3 +1,5 @@
+require 'digest'
+
 class UserIdNotFoundException < Exception ; end
 
 class Database
@@ -7,7 +9,7 @@ class Database
   TrackIdAndOffset = Struct.new(:track_id, :offset_in_milliseconds)
 
   def self.create_tables
-    return if File.exists?(Database.database_name)
+    return if File.exist?(Database.database_name)
 
     db = SQLite3::Database.new(Database.database_name)
     db.execute <<-SQL

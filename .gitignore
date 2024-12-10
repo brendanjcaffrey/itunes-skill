@@ -4,3 +4,4 @@
 /letsencrypt/work/*
 /letsencrypt/config/*
 /letsencrypt/log/*
+/nginx.conf

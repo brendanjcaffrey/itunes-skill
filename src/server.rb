@@ -1,7 +1,5 @@
 require 'json'
-require 'thin'
 require 'sinatra/base'
-require 'sinatra/json'
 require 'sqlite3'
 require 'time'
 require 'sucker_punch'
@@ -19,8 +17,8 @@ require_relative 'secrets.rb'
 
 class Server < Sinatra::Base
   configure do
-    set :bind, '0.0.0.0'
-    set :port, Secrets::PORT
+    set :bind, Secrets::SOCK
+    set :host_authorization, { permitted_hosts: Secrets::PERMITTED_HOSTS }
 
     mime_type :mp3, 'audio/mpeg'
     mime_type :mp4, 'audio/mp4'
@@ -30,18 +28,6 @@ class Server < Sinatra::Base
     mime_type :wav, 'audio/wav'
 
     Database.create_tables
-  end
-
-  # https://gist.github.com/TakahikoKawasaki/40ef0ab011b0a467bedf#file-sinatra-ssl-rb (see ./ssl/README)
-  def self.run!
-    super do |server|
-      server.ssl = true
-      server.ssl_options = {
-        :cert_chain_file  => File.dirname(__FILE__) + "/../letsencrypt/config/live/#{Secrets::DOMAIN}/fullchain.pem",
-        :private_key_file => File.dirname(__FILE__) + "/../letsencrypt/config/live/#{Secrets::DOMAIN}/privkey.pem",
-        :verify_peer      => false
-      }
-    end
   end
 
   get '/tracks/*/*' do
@@ -62,6 +48,6 @@ class Server < Sinatra::Base
     halt unless response
 
     content_type :json
-    json response
+    response.to_json
   end
 end

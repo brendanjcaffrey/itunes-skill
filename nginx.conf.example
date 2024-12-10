@@ -1,0 +1,34 @@
+# this file belongs in /opt/homebrew/etc/nginx/
+
+events { }
+http {
+    access_log ***PATH_HERE***;
+    error_log  ***PATH_HERE***;
+
+    upstream puma_server {
+        server unix:/tmp/itunes-skill.sock;
+    }
+
+    server {
+        listen 8080 ssl;
+        server_name ***HOST_NAME_HERE***;
+
+        # SSL certificate and key paths
+        ssl_certificate      ***FULLCHAIN_PATH_HERE***;
+        ssl_certificate_key  ***PRIVKEY_PATH_HERE***;
+
+        # Additional SSL options for security
+        ssl_protocols TLSv1.2 TLSv1.3;
+        ssl_prefer_server_ciphers on;
+        ssl_ciphers HIGH:!aNULL:!MD5;
+
+        # Specify the location of the app
+        location / {
+            proxy_pass http://puma_server;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+    }
+}

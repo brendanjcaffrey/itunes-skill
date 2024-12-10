@@ -37,19 +37,19 @@ class Database
 
   def create_or_replace_user_playlist(user_id, track_ids)
     hashed_user_id = Digest::MD5.hexdigest(user_id)
-    rows = @sqlite.execute('SELECT id FROM user_playlist WHERE hashed_user_id=?', hashed_user_id)
+    rows = @sqlite.execute('SELECT id FROM user_playlist WHERE hashed_user_id=?', [hashed_user_id])
 
     if !rows.empty?
-      @sqlite.execute('DELETE FROM user_playlist WHERE hashed_user_id=?', hashed_user_id);
-      @sqlite.execute('DELETE FROM user_playlist_entry WHERE user_playlist_id=?', rows[0][0].to_i);
+      @sqlite.execute('DELETE FROM user_playlist WHERE hashed_user_id=?', [hashed_user_id]);
+      @sqlite.execute('DELETE FROM user_playlist_entry WHERE user_playlist_id=?', [rows[0][0].to_i]);
     end
 
-    @sqlite.execute('INSERT INTO user_playlist (hashed_user_id, current_index, total_entries, current_offset_in_milliseconds, next_enqueued) VALUES (?, 0, ?, 0, 0);', hashed_user_id, track_ids.count)
+    @sqlite.execute('INSERT INTO user_playlist (hashed_user_id, current_index, total_entries, current_offset_in_milliseconds, next_enqueued) VALUES (?, 0, ?, 0, 0);', [hashed_user_id, track_ids.count])
     user_playlist_id = @sqlite.last_insert_row_id
 
     track_ids.each_with_index do |track_id, index|
       @sqlite.execute('INSERT INTO user_playlist_entry (user_playlist_id, playlist_index, persistent_id) VALUES (?, ?, ?)',
-                  user_playlist_id, index, track_id)
+                  [user_playlist_id, index, track_id])
     end
   end
 
@@ -60,10 +60,10 @@ class Database
 
     track_ids.each_with_index do |track_id, index|
       @sqlite.execute('INSERT INTO user_playlist_entry (user_playlist_id, playlist_index, persistent_id) VALUES (?, ?, ?)',
-                  user_playlist_id, index + first_index, track_id)
+                  [user_playlist_id, index + first_index, track_id])
     end
 
-    @sqlite.execute('UPDATE user_playlist SET total_entries=? WHERE id=?', first_index + track_ids.count, user_playlist_id)
+    @sqlite.execute('UPDATE user_playlist SET total_entries=? WHERE id=?', [first_index + track_ids.count, user_playlist_id])
   end
 
   def is_valid_user?(user_id)
@@ -83,7 +83,7 @@ class Database
 
   def update_offset(user_id, offset_in_milliseconds)
     hashed_user_id = Digest::MD5.hexdigest(user_id)
-    @sqlite.execute('UPDATE user_playlist SET current_offset_in_milliseconds=? WHERE hashed_user_id=?', offset_in_milliseconds, hashed_user_id)
+    @sqlite.execute('UPDATE user_playlist SET current_offset_in_milliseconds=? WHERE hashed_user_id=?', [offset_in_milliseconds, hashed_user_id])
   end
 
   def get_current_track_and_offset(user_id)
@@ -116,7 +116,7 @@ class Database
   private
 
   def get_user_playlist(hashed_user_id)
-    rows = @sqlite.execute('SELECT id, current_index, total_entries, current_offset_in_milliseconds FROM user_playlist WHERE hashed_user_id=?', hashed_user_id)
+    rows = @sqlite.execute('SELECT id, current_index, total_entries, current_offset_in_milliseconds FROM user_playlist WHERE hashed_user_id=?', [hashed_user_id])
     raise UserIdNotFoundException.new if rows.empty?
     UserPlaylist.new(*rows[0])
   end
@@ -130,11 +130,11 @@ class Database
   end
 
   def update_current_index_and_get_track(user_playlist_id, new_index)
-    @sqlite.execute('UPDATE user_playlist SET current_index=?, current_offset_in_milliseconds=0 WHERE id=?', new_index, user_playlist_id);
+    @sqlite.execute('UPDATE user_playlist SET current_index=?, current_offset_in_milliseconds=0 WHERE id=?', [new_index, user_playlist_id]);
     get_track_id_at_index(user_playlist_id, new_index)
   end
 
   def get_track_id_at_index(user_playlist_id, playlist_index)
-    @sqlite.get_first_value('SELECT persistent_id FROM user_playlist_entry WHERE user_playlist_id=? AND playlist_index=?', user_playlist_id, playlist_index);
+    @sqlite.get_first_value('SELECT persistent_id FROM user_playlist_entry WHERE user_playlist_id=? AND playlist_index=?', [user_playlist_id, playlist_index]);
   end
 end

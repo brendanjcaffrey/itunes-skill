@@ -18,7 +18,7 @@ require_relative 'secrets.rb'
 class Server < Sinatra::Base
   configure do
     set :bind, Secrets::SOCK
-    set :host_authorization, { permitted_hosts: Secrets::PERMITTED_HOSTS }
+    set :host_authorization, { permitted_hosts: [Secrets::DOMAIN] }
 
     mime_type :mp3, 'audio/mpeg'
     mime_type :mp4, 'audio/mp4'
